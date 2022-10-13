@@ -25,6 +25,12 @@ class ApiClient {
     }
 
     const data = await resp.json();
+
+    if (data?.RESPONSE?.ERRORS) {
+      throw new Error(
+        `Failed to send request: ${data?.RESPONSE?.ERRORS.join(" | ")}`
+      );
+    }
     return data?.RESPONSE;
   }
 
@@ -41,7 +47,9 @@ class ApiClient {
         INVOICE_ID: id,
       },
     });
-    console.log("status:", resp?.STATUS);
+    if (resp?.STATUS !== "success") {
+      throw new Error("Failed to update");
+    }
     return resp;
   }
 
@@ -59,10 +67,13 @@ class ApiClient {
         MESSAGE: `Hallo!
 
         Anbei findest du deine Beitragsrechnung für den vorherigen Monat.
-        
+
         Vielen Dank und liebe Grüße!`,
       },
     });
+    if (resp?.STATUS !== "success") {
+      throw new Error("Failed to update");
+    }
     return resp?.STATUS;
   }
 
@@ -143,18 +154,22 @@ function App() {
   }, [client]);
 
   const sendInvoices = useCallback(async () => {
-    for (const invoice of invoices) {
-      await client.completeInvoice(invoice.INVOICE_ID);
-      const [customer, invoices] = await Promise.all([
-        client.getCustomer(invoice.CUSTOMER_ID),
-        client.getInvoices({ INVOICE_ID: invoice.INVOICE_ID }),
-      ]);
-      const serviceStart = new Date(invoices[0].SERVICE_PERIOD_START);
-      await client.sendInvoiceEmail(
-        invoice.INVOICE_ID,
-        customer.EMAIL,
-        serviceStart
-      );
+    try {
+      for (const invoice of invoices) {
+        await client.completeInvoice(invoice.INVOICE_ID);
+        const [customer, invoices] = await Promise.all([
+          client.getCustomer(invoice.CUSTOMER_ID),
+          client.getInvoices({ INVOICE_ID: invoice.INVOICE_ID }),
+        ]);
+        const serviceStart = new Date(invoices[0].SERVICE_PERIOD_START);
+        await client.sendInvoiceEmail(
+          invoice.INVOICE_ID,
+          customer.EMAIL,
+          serviceStart
+        );
+      }
+    } catch (e) {
+      alert(e);
     }
   }, [client, invoices]);
 
