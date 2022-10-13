@@ -41,6 +41,23 @@ class ApiClient {
     return resp?.INVOICES;
   }
 
+  /**
+   *
+   * @param {string} id
+   * @param {Partial<Invoice>} update
+   */
+  async updateInvoice(id, update) {
+    const resp = await this.fetch("invoice.update", {
+      DATA: {
+        INVOICE_ID: id,
+        ...update,
+      },
+    });
+    if (resp?.STATUS !== "success") {
+      throw new Error("Failed to update");
+    }
+  }
+
   async completeInvoice(id) {
     const resp = await this.fetch("invoice.complete", {
       DATA: {
@@ -156,6 +173,9 @@ function App() {
   const sendInvoices = useCallback(async () => {
     try {
       for (const invoice of invoices) {
+        await client.updateInvoice(invoice.INVOICE_ID, {
+          INVOICE_DATE: new Date().toISOString().slice(0, 10),
+        });
         await client.completeInvoice(invoice.INVOICE_ID);
         const [customer, invoices] = await Promise.all([
           client.getCustomer(invoice.CUSTOMER_ID),
