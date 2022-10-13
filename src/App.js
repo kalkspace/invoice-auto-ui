@@ -77,10 +77,7 @@ class ApiClient {
         RECIPIENT: {
           TO: to,
         },
-        SUBJECT: `KalkSpace Coworking Beitrag ${date.toLocaleDateString(
-          "de-DE",
-          { month: "long" }
-        )}`,
+        SUBJECT: `Dein monatlicher KalkSpace Coworking Beitrag`,
         MESSAGE: `Hallo!
 
         Anbei findest du deine Beitragsrechnung für den vorherigen Monat.
